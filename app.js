@@ -88,8 +88,10 @@ var Block = /** @class */ (function () {
         }
         // state
         this.state = this.index > 1 ? this.STATES.ACTIVE : this.STATES.STOPPED;
-        // set direction
-        this.speed = -0.1 - (this.index * 0.005);
+        // set direction with speed increase every 3 levels
+        var level = this.index - 1; // Convert to 0-based level
+        var speedIncreaseFactor = Math.floor(level / 3); // Increase every 3 levels
+        this.speed = -0.1 - (this.index * 0.005) - (speedIncreaseFactor * 0.02);
         if (this.speed < -4)
             this.speed = -4;
         this.direction = this.speed;
