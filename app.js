@@ -88,12 +88,12 @@ var Block = /** @class */ (function () {
         }
         // state
         this.state = this.index > 1 ? this.STATES.ACTIVE : this.STATES.STOPPED;
-        // set direction with speed increase every 3 levels
+        // set direction with slightly slower speed increase
         var level = this.index - 1; // Convert to 0-based level
-        var speedIncreaseFactor = Math.floor(level / 3); // Increase every 3 levels
-        this.speed = -0.1 - (this.index * 0.005) - (speedIncreaseFactor * 0.02);
-        if (this.speed < -4)
-            this.speed = -4;
+        var speedIncreaseFactor = Math.floor(level / 2); // Increase every 2 levels
+        this.speed = -0.13 - (this.index * 0.008) - (speedIncreaseFactor * 0.025); // Slower base and increment
+        if (this.speed < -4.5)
+            this.speed = -4.5;
         this.direction = this.speed;
         // create block
         var geometry = new THREE.BoxGeometry(this.dimension.width, this.dimension.height, this.dimension.depth);
@@ -278,10 +278,16 @@ var Game = /** @class */ (function () {
         }
     };
     Game.prototype.startGame = function () {
+        var _this = this;
         if (this.state != this.STATES.PLAYING) {
             this.scoreContainer.innerHTML = '0';
             this.updateState(this.STATES.PLAYING);
-            
+            // Play start audio
+            var audioStart = document.getElementById('audio-start');
+            if (audioStart) {
+                audioStart.currentTime = 0;
+                audioStart.play();
+            }
             // Reset and start timing metrics
             this.gameMetrics = {
                 totalPrecisionScore: 0,
@@ -335,7 +341,12 @@ var Game = /** @class */ (function () {
         var currentBlock = this.blocks[this.blocks.length - 1];
         var placementTime = Date.now();
         var reactionTime = placementTime - this.gameMetrics.lastBlockTime;
-        
+        // Play stack audio
+        var audioStack = document.getElementById('audio-stack');
+        if (audioStack) {
+            audioStack.currentTime = 0;
+            audioStack.play();
+        }
         var newBlocks = currentBlock.place();
         this.newBlocks.remove(currentBlock.mesh);
         
@@ -427,7 +438,7 @@ var Game = /** @class */ (function () {
         
         // Create comprehensive score object for competition ranking
         var finalScore = {
-            level: this.blocks.length - 1,
+            level: this.blocks.length - 2,
             totalPrecisionScore: this.gameMetrics.totalPrecisionScore,
             averagePrecision: successfulPlacements > 0 ? 
                 (this.gameMetrics.totalOverlapPercentage / successfulPlacements * 100).toFixed(2) : 0,
@@ -452,65 +463,65 @@ var Game = /** @class */ (function () {
         // Store in localStorage for competition tracking
         localStorage.setItem('towerBlockCompetitionScore', JSON.stringify(finalScore));
         
-        // Log detailed metrics for competition organizers
-        // console.log('=== COMPETITION METRICS ===');
-        // console.log('Final Level:', finalScore.level);
-        // console.log('Total Precision Score:', finalScore.totalPrecisionScore);
-        // console.log('Average Precision:', finalScore.averagePrecision + '%');
-        // console.log('Perfect Placements:', finalScore.perfectPlacements);
-        // console.log('Game Duration:', (finalScore.totalGameTime / 1000).toFixed(1) + 's');
-        // console.log('Average Reaction Time:', finalScore.averageReactionTime + 'ms');
-        // console.log('Max Consecutive Streak:', finalScore.maxConsecutiveStreak);
-        // console.log('Efficiency:', finalScore.efficiency + '%');
-        // console.log('--- AREA METRICS ---');
-        // console.log('Total Tower Area:', finalScore.totalTowerArea);
-        // console.log('Area Retention Rate:', finalScore.areaRetentionRate + '%');
-        // console.log('Total Area Lost:', finalScore.totalAreaLost);
-        // console.log('Average Area Loss:', finalScore.averageAreaLoss);
-        // console.log('Minimum Block Area:', finalScore.minBlockArea);
-        // console.log('Final Block Area:', finalScore.finalBlockArea);
-        // console.log('Area Consistency:', finalScore.areaConsistency);
-        // console.log('Area Efficiency Score:', finalScore.areaEfficiencyScore);
-        // console.log('========================');
+        //Log detailed metrics for competition organizers
+        console.log('=== COMPETITION METRICS ===');
+        console.log('Final Level:', finalScore.level);
+        console.log('Total Precision Score:', finalScore.totalPrecisionScore);
+        console.log('Average Precision:', finalScore.averagePrecision + '%');
+        console.log('Perfect Placements:', finalScore.perfectPlacements);
+        console.log('Game Duration:', (finalScore.totalGameTime / 1000).toFixed(1) + 's');
+        console.log('Average Reaction Time:', finalScore.averageReactionTime + 'ms');
+        console.log('Max Consecutive Streak:', finalScore.maxConsecutiveStreak);
+        console.log('Efficiency:', finalScore.efficiency + '%');
+        console.log('--- AREA METRICS ---');
+        console.log('Total Tower Area:', finalScore.totalTowerArea);
+        console.log('Area Retention Rate:', finalScore.areaRetentionRate + '%');
+        console.log('Total Area Lost:', finalScore.totalAreaLost);
+        console.log('Average Area Loss:', finalScore.averageAreaLoss);
+        console.log('Minimum Block Area:', finalScore.minBlockArea);
+        console.log('Final Block Area:', finalScore.finalBlockArea);
+        console.log('Area Consistency:', finalScore.areaConsistency);
+        console.log('Area Efficiency Score:', finalScore.areaEfficiencyScore);
+        console.log('========================');
         
-        // // Display metrics in game over screen
-        // var metricsContainer = document.getElementById('competition-metrics');
-        // if (metricsContainer) {
-        //     // Calculate performance badges
-        //     var badges = [];
-        //     if (finalScore.level >= 20) badges.push('🏆 Master Builder');
-        //     if (finalScore.perfectPlacements >= 5) badges.push('🎯 Perfect Precision');
-        //     if (parseFloat(finalScore.areaRetentionRate) >= 80) badges.push('💎 Area Expert');
-        //     if (finalScore.maxConsecutiveStreak >= 10) badges.push('🔥 Streak Master');
-        //     if (finalScore.averageReactionTime <= 800) badges.push('⚡ Lightning Fast');
+        // Display metrics in game over screen
+        var metricsContainer = document.getElementById('competition-metrics');
+        if (metricsContainer) {
+            // Calculate performance badges
+            var badges = [];
+            if (finalScore.level >= 20) badges.push('🏆 Master Builder');
+            if (finalScore.perfectPlacements >= 5) badges.push('🎯 Perfect Precision');
+            if (parseFloat(finalScore.areaRetentionRate) >= 80) badges.push('💎 Area Expert');
+            if (finalScore.maxConsecutiveStreak >= 10) badges.push('🔥 Streak Master');
+            if (finalScore.averageReactionTime <= 800) badges.push('⚡ Lightning Fast');
             
-        //     var badgeDisplay = badges.length > 0 ? 
-        //         '<div class="section-header">Achievements</div>' +
-        //         badges.map(function(badge) { 
-        //             return '<div class="badge">' + badge + '</div>'; 
-        //         }).join('') : '';
+            var badgeDisplay = badges.length > 0 ? 
+                '<div class="section-header">Achievements</div>' +
+                badges.map(function(badge) { 
+                    return '<div class="badge">' + badge + '</div>'; 
+                }).join('') : '';
             
-        //     metricsContainer.innerHTML = 
-        //         badgeDisplay +
-        //         '<div class="section-header">📊 Core Metrics</div>' +
-        //         '<div class="highlight-metric">' +
-        //             '<div class="metric-row"><span>🏗️ Final Level</span><span>' + finalScore.level + '</span></div>' +
-        //         '</div>' +
-        //         '<div class="metric-row"><span>🎯 Precision Score</span><span>' + finalScore.totalPrecisionScore + '</span></div>' +
-        //         '<div class="metric-row"><span>📈 Average Accuracy</span><span>' + finalScore.averagePrecision + '%</span></div>' +
-        //         '<div class="metric-row"><span>💯 Perfect Placements</span><span>' + finalScore.perfectPlacements + '</span></div>' +
+            metricsContainer.innerHTML = 
+                badgeDisplay +
+                '<div class="section-header">📊 Core Metrics</div>' +
+                '<div class="highlight-metric">' +
+                    '<div class="metric-row"><span>🏗️ Final Level</span><span>' + finalScore.level + '</span></div>' +
+                '</div>' +
+                '<div class="metric-row"><span>🎯 Precision Score</span><span>' + finalScore.totalPrecisionScore + '</span></div>' +
+                '<div class="metric-row"><span>📈 Average Accuracy</span><span>' + finalScore.averagePrecision + '%</span></div>' +
+                '<div class="metric-row"><span>💯 Perfect Placements</span><span>' + finalScore.perfectPlacements + '</span></div>' +
                 
-        //         '<div class="section-header">📐 Area Performance</div>' +
-        //         '<div class="metric-row"><span>🏢 Tower Area</span><span>' + finalScore.totalTowerArea + '</span></div>' +
-        //         '<div class="metric-row"><span>💾 Area Retention</span><span>' + finalScore.areaRetentionRate + '%</span></div>' +
-        //         '<div class="metric-row"><span>🧩 Final Block Area</span><span>' + finalScore.finalBlockArea + '</span></div>' +
-        //         '<div class="metric-row"><span>⚖️ Area Consistency</span><span>' + finalScore.areaConsistency + '</span></div>' +
+                '<div class="section-header">📐 Area Performance</div>' +
+                '<div class="metric-row"><span>🏢 Tower Area</span><span>' + finalScore.totalTowerArea + '</span></div>' +
+                '<div class="metric-row"><span>💾 Area Retention</span><span>' + finalScore.areaRetentionRate + '%</span></div>' +
+                '<div class="metric-row"><span>🧩 Final Block Area</span><span>' + finalScore.finalBlockArea + '</span></div>' +
+                '<div class="metric-row"><span>⚖️ Area Consistency</span><span>' + finalScore.areaConsistency + '</span></div>' +
                 
-        //         '<div class="section-header">⏱️ Timing & Efficiency</div>' +
-        //         '<div class="metric-row"><span>🕐 Game Duration</span><span>' + (finalScore.totalGameTime / 1000).toFixed(1) + 's</span></div>' +
-        //         '<div class="metric-row"><span>⚡ Avg Reaction Time</span><span>' + finalScore.averageReactionTime + 'ms</span></div>' +
-        //         '<div class="metric-row"><span>🔥 Max Streak</span><span>' + finalScore.maxConsecutiveStreak + '</span></div>';
-        // }
+                '<div class="section-header">⏱️ Timing & Efficiency</div>' +
+                '<div class="metric-row"><span>🕐 Game Duration</span><span>' + (finalScore.totalGameTime / 1000).toFixed(1) + 's</span></div>' +
+                '<div class="metric-row"><span>⚡ Avg Reaction Time</span><span>' + finalScore.averageReactionTime + 'ms</span></div>' +
+                '<div class="metric-row"><span>🔥 Max Streak</span><span>' + finalScore.maxConsecutiveStreak + '</span></div>';
+        }
         
         this.updateState(this.STATES.ENDED);
     };
